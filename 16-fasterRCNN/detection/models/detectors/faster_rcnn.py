@@ -92,7 +92,8 @@ class FasterRCNN(tf.keras.Model, RPNTestMixin, BBoxTestMixin):
             pool_shape=self.POOL_SIZE,
             name='pyramid_roi_align')
         
-        self.bbox_head = bbox_head.BBoxHead(
+        # 整个FRCNN 的最后一段，即输出bbox预测坐标与分类预测
+        self.bbox_head = bbox_head.BBoxHead( 
             num_classes=self.NUM_CLASSES,
             pool_size=self.POOL_SIZE,
             target_means=self.RCNN_TARGET_MEANS,
@@ -142,6 +143,10 @@ class FasterRCNN(tf.keras.Model, RPNTestMixin, BBoxTestMixin):
         pooled_regions_list = self.roi_align(#
             (rois_list, rcnn_feature_maps, img_metas), training=training)
         # [192, 81], [192, 81], [192, 81, 4]
+        
+        # ROI ALIGN已完成，进入网络最后一部分，即预测bbox坐标与分类
+        
+        # 注意， 这里分类预测时，使用了未通过激活函数的logit  rcnn_class_logits_list， 用logit计算CE，符合原生keras计算方式
         rcnn_class_logits_list, rcnn_probs_list, rcnn_deltas_list = \
             self.bbox_head(pooled_regions_list, training=training)
 
