@@ -3,7 +3,10 @@ import tensorflow as tf
 from detection.utils.misc import *
 
 class PyramidROIAlign(tf.keras.layers.Layer):
-
+    
+    # FPN 网络生成四种scale 的feature map，此文件作用即为将所有获得的rois映射回各自应归属的level feature map，具体方法见FPN论文
+    # 将所有裁好后的roi feature map串联起来
+    
     def __init__(self, pool_shape, **kwargs):
         '''
         Implements ROI Pooling on multiple levels of the feature pyramid.
@@ -60,7 +63,9 @@ class PyramidROIAlign(tf.keras.layers.Layer):
         # Equation 1 in the Feature Pyramid Networks paper. Account for
         # the fact that our coordinates are normalized here.
         # e.g. a 224x224 ROI (in pixels) maps to P4
-
+        
+        # 根据roi的不同大小，给他们找一个合适的level，映射回去
+        
         roi_level = tf.math.log( # [2000]
                     tf.sqrt(tf.squeeze(h * w, 1))
                     / tf.cast((224.0 / tf.sqrt(areas * 1.0)), tf.float32)
@@ -73,7 +78,7 @@ class PyramidROIAlign(tf.keras.layers.Layer):
         # Loop through levels and apply ROI pooling to each. P2 to P5.
         pooled_rois = []
         roi_to_level = []
-        for i, level in enumerate(range(2, 6)): # 2,3,4,5
+        for i, level in enumerate(range(2, 6)): # 2,3,4,5 # 遍历每个level
             ix = tf.where(tf.equal(roi_level, level)) # [1999, 1], means 1999 of 2000 select P2
             level_rois = tf.gather_nd(rois, ix) # boxes to crop, [1999, 4]
 
