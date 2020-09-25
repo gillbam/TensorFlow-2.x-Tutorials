@@ -130,6 +130,9 @@ class FasterRCNN(tf.keras.Model, RPNTestMixin, BBoxTestMixin):
             rpn_probs, rpn_deltas, img_metas)
         
         if training: # get target value for these proposal target label and target delta
+            # rcnn_target_matchs_list ： class id ground truth
+            # rcnn_target_deltas_list： 偏移量 ground truth
+            # 算这俩为了下面计算loss用
             rois_list, rcnn_target_matchs_list, rcnn_target_deltas_list = \
                 self.bbox_target.build_targets(
                     proposals_list, gt_boxes, gt_class_ids, img_metas)
@@ -143,11 +146,11 @@ class FasterRCNN(tf.keras.Model, RPNTestMixin, BBoxTestMixin):
             self.bbox_head(pooled_regions_list, training=training)
 
         if training:         
-            rpn_class_loss, rpn_bbox_loss = self.rpn_head.loss(
+            rpn_class_loss, rpn_bbox_loss = self.rpn_head.loss(  # 计算rpn的loss， 两种loss
                 rpn_class_logits, rpn_deltas, gt_boxes, gt_class_ids, img_metas)
             
             rcnn_class_loss, rcnn_bbox_loss = self.bbox_head.loss(
-                rcnn_class_logits_list, rcnn_deltas_list, 
+                rcnn_class_logits_list, rcnn_deltas_list, # 计算rcnn的loss， 两种loss
                 rcnn_target_matchs_list, rcnn_target_deltas_list)
             
             return [rpn_class_loss, rpn_bbox_loss, 
