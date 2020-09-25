@@ -8,6 +8,8 @@ from detection.core.anchor import anchor_generator, anchor_target
 from detection.core.loss import losses
 
 class RPNHead(tf.keras.Model):
+    
+    # 对fpn输出的每一层feature map 做proposal
 
     def __init__(self, 
                  anchor_scales=(32, 64, 128, 256, 512), 
@@ -100,6 +102,9 @@ class RPNHead(tf.keras.Model):
         layer_outputs = []
         
         for feat in inputs: # for every anchors feature maps
+            
+            # 总共五个level， 遍历之，逐一做proposal
+            
             """
             (1, 304, 304, 256)
             (1, 152, 152, 256)
