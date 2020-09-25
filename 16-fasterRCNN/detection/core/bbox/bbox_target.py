@@ -9,10 +9,10 @@ class ProposalTarget:
     def __init__(self,
                  target_means=(0., 0., 0., 0.),
                  target_stds=(0.1, 0.1, 0.2, 0.2), 
-                 num_rcnn_deltas=256,
-                 positive_fraction=0.25,
-                 pos_iou_thr=0.5,
-                 neg_iou_thr=0.5):
+                 num_rcnn_deltas=256,  # 一张图最多的ROI / anchors 数量
+                 positive_fraction=0.25, # 一张图最多的正例anchor比例
+                 pos_iou_thr=0.5, # iou大于这个就是正例
+                 neg_iou_thr=0.5): # iou小于这个就是负例
         '''
         Compute regression and classification targets for proposals.
         
@@ -35,9 +35,11 @@ class ProposalTarget:
         Generates detection targets for images. Subsamples proposals and
         generates target class IDs, bounding box deltas for each.
         
+        # 就是build ground truth 的一个函数，返回值最后要被用到计算loss
+        
         Args
         ---
-            proposals_list: list of [num_proposals, (y1, x1, y2, x2)] in normalized coordinates.
+            proposals_list: list of [num_proposals, (y1, x1, y2, x2)] in normalized coordinates.  # RPN的输出proposals, 数组长度为batch_size
             gt_boxes: [batch_size, num_gt_boxes, (y1, x1, y2, x2)] in image coordinates.
             gt_class_ids: [batch_size, num_gt_boxes] Integer class IDs.
             img_metas: [batch_size, 11]
@@ -45,7 +47,7 @@ class ProposalTarget:
         Returns
         ---
             rois_list: list of [num_rois, (y1, x1, y2, x2)] in normalized coordinates
-            rcnn_target_matchs_list: list of [num_rois]. Integer class IDs.
+            rcnn_target_matchs_list: list of [num_rois]. Integer class IDs.     
             rcnn_target_deltas_list: list of [num_positive_rois, (dy, dx, log(dh), log(dw))].
             
         Note that self.num_rcnn_deltas >= num_rois > num_positive_rois. And different 
