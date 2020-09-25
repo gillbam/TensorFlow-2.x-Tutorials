@@ -92,10 +92,10 @@ class BBoxHead(tf.keras.Model):
         :param rcnn_target_deltas_list:
         :return:
         """
-        rcnn_class_loss = self.rcnn_class_loss(
+        rcnn_class_loss = self.rcnn_class_loss(  # 分类损失， 交叉熵
             rcnn_target_matchs_list, rcnn_class_logits_list)
-        rcnn_bbox_loss = self.rcnn_bbox_loss(
-            rcnn_target_deltas_list, rcnn_target_matchs_list, rcnn_deltas_list)
+        rcnn_bbox_loss = self.rcnn_bbox_loss(   #  bouding box 的回归损失， smooth l1
+            rcnn_target_deltas_list, rcnn_target_matchs_list, rcnn_deltas_list) 
         
         return rcnn_class_loss, rcnn_bbox_loss
         
