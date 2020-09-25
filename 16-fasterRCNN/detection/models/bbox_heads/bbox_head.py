@@ -6,6 +6,9 @@ from detection.core.loss import losses
 from detection.utils.misc import *
 
 class BBoxHead(tf.keras.Model):
+    
+    # 文件功能：  整个FRCNN 的最后一段，即输出bbox预测坐标与分类预测
+    
     def __init__(self, num_classes, 
                  pool_size=(7, 7),
                  target_means=(0., 0., 0., 0.), 
@@ -38,8 +41,10 @@ class BBoxHead(tf.keras.Model):
         self.rcnn_class_bn2 = layers.BatchNormalization(name='rcnn_class_bn2')
         
         self.rcnn_class_logits = layers.Dense(num_classes, name='rcnn_class_logits')
+        # 分类预测
         
         self.rcnn_delta_fc = layers.Dense(num_classes * 4, name='rcnn_bbox_fc')
+        # bbox 坐标预测
         
     def call(self, inputs, training=True):
         '''
@@ -68,10 +73,10 @@ class BBoxHead(tf.keras.Model):
         x = tf.squeeze(tf.squeeze(x, 2), 1)
         
         logits = self.rcnn_class_logits(x)
-        probs = tf.nn.softmax(logits)
+        probs = tf.nn.softmax(logits)  # 分类概率
         
         deltas = self.rcnn_delta_fc(x)
-        deltas = tf.reshape(deltas, (-1, self.num_classes, 4))
+        deltas = tf.reshape(deltas, (-1, self.num_classes, 4))  # bbox 坐标预测
         
 
         rcnn_class_logits_list = tf.split(logits, num_pooled_rois_list, 0)
