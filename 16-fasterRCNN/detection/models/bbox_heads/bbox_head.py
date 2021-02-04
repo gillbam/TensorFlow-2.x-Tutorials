@@ -51,6 +51,7 @@ class BBoxHead(tf.keras.Model):
         Args
         ---
             pooled_rois_list: List of [num_rois, pool_size, pool_size, channels]
+            # list 长度为batch size
         
         Returns
         ---
@@ -78,7 +79,10 @@ class BBoxHead(tf.keras.Model):
         deltas = self.rcnn_delta_fc(x)
         deltas = tf.reshape(deltas, (-1, self.num_classes, 4))  # bbox 坐标预测
         
-
+        # tf.split 使用方法 https://blog.csdn.net/mls0311/article/details/82052472
+        # 如果num_or_size_splits 传入的 是一个整数，那直接在axis=D这个维度上把张量平均切分成几个小张量
+        # 所以rcnn_class_logits_list， rcnn_probs_list， rcnn_deltas_list
+        # 这三个list 的shape基本均为 （batch size, num_pooled_rois_list(num_rois), num_classes），（except for rcnn_deltas_list）
         rcnn_class_logits_list = tf.split(logits, num_pooled_rois_list, 0)
         rcnn_probs_list = tf.split(probs, num_pooled_rois_list, 0)
         rcnn_deltas_list = tf.split(deltas, num_pooled_rois_list, 0)
