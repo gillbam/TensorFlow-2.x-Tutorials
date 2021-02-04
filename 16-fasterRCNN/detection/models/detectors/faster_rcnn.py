@@ -147,6 +147,12 @@ class FasterRCNN(tf.keras.Model, RPNTestMixin, BBoxTestMixin):
         # ROI ALIGN已完成，进入网络最后一部分，即预测bbox坐标与分类
         
         # 注意， 这里分类预测时，使用了未通过激活函数的logit  rcnn_class_logits_list， 用logit计算CE，符合原生keras计算方式
+        # rcnn_class_logits_list: List of [num_rois, num_classes] 
+        # rcnn_probs_list: List of [num_rois, num_classes]
+        # rcnn_deltas_list: List of [num_rois, num_classes, (dy, dx, log(dh), log(dw))]
+        
+        # list长度均为 batch size
+        
         rcnn_class_logits_list, rcnn_probs_list, rcnn_deltas_list = \
             self.bbox_head(pooled_regions_list, training=training)
 
