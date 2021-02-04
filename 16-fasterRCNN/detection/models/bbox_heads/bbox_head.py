@@ -7,7 +7,7 @@ from detection.utils.misc import *
 
 class BBoxHead(tf.keras.Model):
     
-    # 文件功能：  整个FRCNN 的最后一段，即输出bbox预测坐标与分类预测
+    # 文件功能：  整个Faster RCNN 的最后一段，即输出bbox预测坐标与分类预测
     
     def __init__(self, num_classes, 
                  pool_size=(7, 7),
@@ -114,7 +114,7 @@ class BBoxHead(tf.keras.Model):
         ---
             rcnn_probs_list: List of [num_rois, num_classes]
             rcnn_deltas_list: List of [num_rois, num_classes, (dy, dx, log(dh), log(dw))]
-            rois_list: List of [num_rois, (y1, x1, y2, x2)]
+            rois_list: List of [num_detections, (y1, x1, y2, x2)]
             img_meta_list: [batch_size, 11]
         
         Returns
@@ -128,10 +128,13 @@ class BBoxHead(tf.keras.Model):
             self._get_bboxes_single(
                 rcnn_probs_list[i], rcnn_deltas_list[i], rois_list[i], pad_shapes[i])
             for i in range(img_metas.shape[0])
+            # 遍历每个batch， detections_list 最后的shape： （batch_size，num_detections, (y1, x1, y2, x2, class_id, score)）
+            # num_detections ！= num_rois， 不一定每个roi都出detection
         ]
         return detections_list  
     
     def _get_bboxes_single(self, rcnn_probs, rcnn_deltas, rois, img_shape):
+        # 处理单batch的函数
         '''
         Args
         ---
@@ -184,13 +187,14 @@ class BBoxHead(tf.keras.Model):
             class_keep = tf.image.non_max_suppression(
                     tf.gather(pre_nms_rois, ixs),
                     tf.gather(pre_nms_scores, ixs),
-                    max_output_size=self.max_instances,
+                    max_output_size=self.max_instances,  # max_instances为一个roi的最大实例数量
                     iou_threshold=self.nms_threshold)
             # Map indices
             class_keep = tf.gather(keep, tf.gather(ixs, class_keep))
             return class_keep
 
-        # 2. Map over class IDs
+        # 2. Map over class IDs  
+        # 对每个类做NMS
         nms_keep = []
         for i in range(unique_pre_nms_class_ids.shape[0]):
             nms_keep.append(nms_keep_map(unique_pre_nms_class_ids[i]))
@@ -203,6 +207,7 @@ class BBoxHead(tf.keras.Model):
         # Keep top detections
         roi_count = self.max_instances
         class_scores_keep = tf.gather(class_scores, keep)
+        # num_keep 即为最终输出的检测到的类别数（bbox的数量）
         num_keep = tf.minimum(tf.shape(class_scores_keep)[0], roi_count)
         top_ids = tf.nn.top_k(class_scores_keep, k=num_keep, sorted=True)[1]
         keep = tf.gather(keep, top_ids)  
@@ -213,5 +218,5 @@ class BBoxHead(tf.keras.Model):
             tf.gather(class_scores, keep)[..., tf.newaxis]
             ], axis=1)
         
-        return detections
+        return detections #长度为num_keep，见上
         
